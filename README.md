@@ -14,8 +14,11 @@ MCP server PoC from _scratch_ in Go.
 
 ## Non-goals
 
+- `_meta`/`icons` fields
 - Authorization
 - Server features
   - Resources 
   - Prompts
 - Utility features
+  - Pings
+  - Logging
