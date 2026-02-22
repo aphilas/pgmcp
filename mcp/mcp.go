@@ -35,19 +35,8 @@ func (s Server) Handle(r jsonrpc.Request) *jsonrpc.Response {
 	switch r.Method {
 	case "initialize":
 		var p InitializeRequestParams
-		err := json.Unmarshal(r.Params, &p)
-		if err != nil {
-			log.Printf("Error unmarshaling json: %v", err)
-			return jsonrpc.NewErrorResponse(
-				r.ID,
-				&jsonrpc.Error{
-					Code:    jsonrpc.CodeInvalidParams,
-					Message: "Invalid params",
-				},
-			)
-		}
 
-		result, jerr := s.initialize(p)
+		_, jerr := s.initialize(p)
 		if jerr != nil {
 			return jsonrpc.NewErrorResponse(
 				r.ID,
@@ -55,7 +44,7 @@ func (s Server) Handle(r jsonrpc.Request) *jsonrpc.Response {
 			)
 		}
 
-		return jsonrpc.NewResponse(r.ID, result)
+		return jsonrpc.NewResponse(r.ID, make(map[string]any))
 	case "tools/list":
 		return jsonrpc.NewResponse(r.ID, map[string]any{
 			"tools": []string{},

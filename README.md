@@ -5,7 +5,7 @@ MCP server PoC from _scratch_ in Go.
 ## Goals
 
 - [ ] Transport Layer
-  - [ ] stdio
+  - [x] stdio
   - [ ] Streamable HTTP
 - [ ] Data Layer
   - [ ] Connection Initialization
@@ -20,5 +20,4 @@ MCP server PoC from _scratch_ in Go.
   - Resources 
   - Prompts
 - Utility features
-  - Pings
   - Logging
