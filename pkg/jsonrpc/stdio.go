@@ -79,7 +79,7 @@ func (s *StdioServer) Serve() {
 		if err := json.Unmarshal(scanner.Bytes(), &req); err != nil {
 			logger.Printf("Failed to parse request: %v", err)
 			writeResponse(NewErrorResponse(nil, &Error{
-				Code:    CodeInvalidRequest,
+				Code:    CodeParseError,
 				Message: "Invalid request: invalid JSON",
 			}))
 			continue

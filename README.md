@@ -8,16 +8,27 @@ MCP server PoC from _scratch_ in Go.
   - [x] stdio
   - [ ] Streamable HTTP
 - [ ] Data Layer
-  - [ ] Connection Initialization
+  - [x] Connection Initialization
   - [ ] Server features
     - [ ] Tools - query Postgres database
 
 ## Non-goals
 
-- `_meta`/`icons` fields
 - Authorization
 - Server features
   - Resources 
   - Prompts
 - Utility features
   - Logging
+
+## Getting Started
+
+```sh
+go install cmd/pgmcp/pgmcp.go
+```
+
+## Screenshots
+
+Calculator tool:
+
+![calculator tool](./assets/calculator.png)

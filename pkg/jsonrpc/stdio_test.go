@@ -176,7 +176,7 @@ func TestServeInvalidJSON(t *testing.T) {
 	if errResp.Error == nil {
 		t.Fatal("expected error in first response")
 	}
-	if errResp.Error.Code != CodeInvalidRequest {
+	if errResp.Error.Code != CodeParseError {
 		t.Errorf("Error.Code = %d, want %d", errResp.Error.Code, CodeInvalidRequest)
 	}
 
