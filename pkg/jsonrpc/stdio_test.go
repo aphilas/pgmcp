@@ -17,7 +17,7 @@ func newTestServer(input string) (*StdioServer, *bytes.Buffer) {
 
 func TestHandleMethodFound(t *testing.T) {
 	s, _ := newTestServer("")
-	s.RegisterMethod("ping", func(params map[string]any) (map[string]any, *Error) {
+	s.RegisterMethod("ping", func(params json.RawMessage) (json.RawMessage, *Error) {
 		return EmptyResult(), nil
 	})
 
@@ -56,7 +56,7 @@ func TestHandleMethodNotFound(t *testing.T) {
 
 func TestHandleMethodReturnsError(t *testing.T) {
 	s, _ := newTestServer("")
-	s.RegisterMethod("fail", func(params map[string]any) (map[string]any, *Error) {
+	s.RegisterMethod("fail", func(params json.RawMessage) (json.RawMessage, *Error) {
 		return nil, &Error{Code: CodeInternalError, Message: "boom"}
 	})
 
@@ -80,14 +80,14 @@ func TestHandleMethodReturnsError(t *testing.T) {
 
 func TestHandlePassesParams(t *testing.T) {
 	s, _ := newTestServer("")
-	s.RegisterMethod("echo", func(params map[string]any) (map[string]any, *Error) {
+	s.RegisterMethod("echo", func(params json.RawMessage) (json.RawMessage, *Error) {
 		return params, nil
 	})
 
 	req := &Request{
 		JSONRPC: Version,
 		Method:  "echo",
-		Params:  map[string]any{"msg": "hello"},
+		Params:  json.RawMessage(`{"msg":"hello"}`),
 		ID:      json.RawMessage(`1`),
 	}
 	resp := s.Handle(req)
@@ -95,15 +95,15 @@ func TestHandlePassesParams(t *testing.T) {
 	if resp.Error != nil {
 		t.Fatalf("unexpected error: %v", resp.Error)
 	}
-	if resp.Result["msg"] != "hello" {
-		t.Errorf("Result[msg] = %v, want %q", resp.Result["msg"], "hello")
+	if string(resp.Result) != `{"msg":"hello"}` {
+		t.Errorf("Result = %s, want %s", resp.Result, `{"msg":"hello"}`)
 	}
 }
 
 func TestServeRoundTrip(t *testing.T) {
 	input := `{"jsonrpc":"2.0","id":1,"method":"ping","params":{}}` + "\n"
 	s, out := newTestServer(input)
-	s.RegisterMethod("ping", func(params map[string]any) (map[string]any, *Error) {
+	s.RegisterMethod("ping", func(params json.RawMessage) (json.RawMessage, *Error) {
 		return EmptyResult(), nil
 	})
 
@@ -128,7 +128,7 @@ func TestServeMultipleRequests(t *testing.T) {
 	input := `{"jsonrpc":"2.0","id":1,"method":"ping"}` + "\n" +
 		`{"jsonrpc":"2.0","id":2,"method":"ping"}` + "\n"
 	s, out := newTestServer(input)
-	s.RegisterMethod("ping", func(params map[string]any) (map[string]any, *Error) {
+	s.RegisterMethod("ping", func(params json.RawMessage) (json.RawMessage, *Error) {
 		return EmptyResult(), nil
 	})
 
@@ -156,7 +156,7 @@ func TestServeInvalidJSON(t *testing.T) {
 	in := strings.NewReader(input)
 	out := &bytes.Buffer{}
 	s := NewStdioServer(in, out, errBuf)
-	s.RegisterMethod("ping", func(params map[string]any) (map[string]any, *Error) {
+	s.RegisterMethod("ping", func(params json.RawMessage) (json.RawMessage, *Error) {
 		return EmptyResult(), nil
 	})
 

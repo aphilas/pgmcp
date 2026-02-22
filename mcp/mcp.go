@@ -10,13 +10,13 @@ import (
 
 const ProtocolVersion = "2025-11-25"
 
-type Params = any
-type Result = any
-type Method = func(json.RawMessage) (json.RawMessage, error)
+type Params = json.RawMessage
+type Result = json.RawMessage
 
 type Server struct {
 	ProtocolVersion string
 	ServerInfo      Implementation
+	methods         map[string]jsonrpc.Method
 }
 
 func NewServer() *Server {
@@ -31,30 +31,35 @@ func NewServer() *Server {
 	return &s
 }
 
-func (s Server) Handle(r jsonrpc.Request) *jsonrpc.Response {
-	switch r.Method {
+func (s *Server) RegisterMethod(name string, method jsonrpc.Method) {
+	s.methods[name] = method
+}
+
+
+func (s Server) Handle(req jsonrpc.Request) *jsonrpc.Response {
+	switch req.Method {
 	case "initialize":
 		var p InitializeRequestParams
 
 		_, jerr := s.initialize(p)
 		if jerr != nil {
 			return jsonrpc.NewErrorResponse(
-				r.ID,
+				req.ID,
 				jerr,
 			)
 		}
 
-		return jsonrpc.NewResponse(r.ID, make(map[string]any))
+		return jsonrpc.NewResponse(req.ID, jsonrpc.EmptyResult())
 	case "tools/list":
-		return jsonrpc.NewResponse(r.ID, map[string]any{
+		return jsonrpc.NewResponse(req.ID, jsonrpc.JSONRawMessage(map[string]any{
 			"tools": []string{},
-		})
+		}))
 	default:
 		return jsonrpc.NewErrorResponse(
-			r.ID,
+			req.ID,
 			&jsonrpc.Error{
 				Code:    jsonrpc.CodeMethodNotFound,
-				Message: fmt.Sprintf("Method %q not found", r.Method),
+				Message: fmt.Sprintf("Method %q not found", req.Method),
 			},
 		)
 	}

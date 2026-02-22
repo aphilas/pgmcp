@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"os"
 
@@ -11,7 +12,7 @@ func main() {
 	server := jsonrpc.NewStdioServer(os.Stdin, os.Stdout, os.Stderr)
 	log.Printf("starting stdio jsonrpc server\n")
 
-	server.RegisterMethod("ping", func(params map[string]any) (map[string]any, *jsonrpc.Error) {
+	server.RegisterMethod("ping", func(params json.RawMessage) (json.RawMessage, *jsonrpc.Error) {
 		return jsonrpc.EmptyResult(), nil
 	})
 

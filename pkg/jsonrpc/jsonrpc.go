@@ -8,7 +8,7 @@ import (
 
 const Version = "2.0"
 
-type Method func(params map[string]any) (map[string]any, *Error) 
+type Method func(params json.RawMessage) (json.RawMessage, *Error)
 
 type Server struct {
 	methods map[string]Method
@@ -20,8 +20,8 @@ func NewServer() *Server {
 	}
 }
 
-func EmptyResult() map[string]any {
-	return make(map[string]any)
+func EmptyResult() json.RawMessage {
+	return json.RawMessage(`{}`)
 }
 
 func (s *Server) RegisterMethod(name string, method Method) {
@@ -33,23 +33,23 @@ func (s *Server) RegisterMethod(name string, method Method) {
 type Request struct {
 	JSONRPC string         `json:"jsonrpc"`
 	Method  string         `json:"method"`
-	Params  map[string]any `json:"params,omitempty"`
+	Params  json.RawMessage `json:"params,omitempty"`
 	// ID is int | string
 	ID json.RawMessage `json:"id,omitempty"`
 }
 
 // Notification represents a JSON-RPC notification object.
 type Notification struct {
-	JSONRPC string         `json:"jsonrpc"`
-	Method  string         `json:"method"`
-	Params  map[string]any `json:"params,omitempty"`
+	JSONRPC string          `json:"jsonrpc"`
+	Method  string          `json:"method"`
+	Params  json.RawMessage `json:"params,omitempty"`
 }
 
 // Response represents a JSON-RPC response object.
 // One of Result or Error must be provided.
 type Response struct {
-	JSONRPC string         `json:"jsonrpc"`
-	Result  map[string]any `json:"result"`
+	JSONRPC string          `json:"jsonrpc"`
+	Result  json.RawMessage `json:"result"`
 	Error   *Error         `json:"error,omitempty"`
 	// ID is int | string
 	ID json.RawMessage `json:"id"`
@@ -84,7 +84,7 @@ const (
 )
 
 // NewRequest is a helper to create a new Request.
-func NewRequest(method string, params map[string]any, id any) (*Request, error) {
+func NewRequest(method string, params json.RawMessage, id any) (*Request, error) {
 	var i json.RawMessage
 	if id != nil {
 		idBytes, err := json.Marshal(id)
@@ -104,7 +104,7 @@ func NewRequest(method string, params map[string]any, id any) (*Request, error) 
 }
 
 // NewResponse is a helper to create a success Response.
-func NewResponse(id json.RawMessage, result map[string]any) *Response {
+func NewResponse(id json.RawMessage, result json.RawMessage) *Response {
 	return &Response{
 		JSONRPC: Version,
 		Result:  result,

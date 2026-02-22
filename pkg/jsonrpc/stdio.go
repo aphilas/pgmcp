@@ -7,6 +7,8 @@ import (
 	"log"
 )
 
+// StdioServer implements a JSON-RPC server that communicates over standard
+// input and output.
 type StdioServer struct {
 	// in is the input stream for reading JSON-RPC requests.
 	in io.Reader
@@ -18,6 +20,8 @@ type StdioServer struct {
 	methods map[string]Method
 }
 
+// NewStdioServer creates a new StdioServer with the given input, output, and
+// error streams.
 func NewStdioServer(in io.Reader, out io.Writer, err io.Writer) *StdioServer {
 	return &StdioServer{
 		in:      in,
@@ -27,6 +31,7 @@ func NewStdioServer(in io.Reader, out io.Writer, err io.Writer) *StdioServer {
 	}
 }
 
+// RehgisterMethod registers a JSON-RPC method with the server.
 func (s *StdioServer) RegisterMethod(name string, method Method) {
 	s.methods[name] = method
 }
@@ -51,29 +56,46 @@ func (s *StdioServer) Handle(req *Request) *Response {
 	return NewResponse(req.ID, result)
 }
 
+// Serve starts the server and listens for incoming JSON-RPC requests on the
+// input stream. It processes each request and writes the corresponding response
+// to the output stream.
 func (s *StdioServer) Serve() {
 	logger := log.New(s.err, "jsonrpc: ", log.LstdFlags)
+
+	writeResponse := func(resp *Response) {
+		respBytes, err := json.Marshal(resp)
+		if err != nil {
+			logger.Printf("Failed to marshal response: %v", err)
+			return
+		}
+
+		s.out.Write(respBytes)
+		s.out.Write([]byte("\n"))
+	}
 
 	scanner := bufio.NewScanner(s.in)
 	for scanner.Scan() {
 		var req Request
 		if err := json.Unmarshal(scanner.Bytes(), &req); err != nil {
 			logger.Printf("Failed to parse request: %v", err)
-			
-			resp := NewErrorResponse(nil, &Error{
+			writeResponse(NewErrorResponse(nil, &Error{
 				Code:    CodeInvalidRequest,
 				Message: "Invalid request: invalid JSON",
-			})
-			respBytes, marshalErr := json.Marshal(resp)
-			if marshalErr != nil {
-				logger.Printf("Failed to marshal error response: %v", marshalErr)
-				continue
-			}
-			
-			s.out.Write(respBytes)
-			s.out.Write([]byte("\n"))
+			}))
 			continue
 		}
+
+		// JSONRPC MUST be version 2.0
+		if req.JSONRPC != Version {
+			logger.Printf("Invalid JSON-RPC version: %s", req.JSONRPC)
+			writeResponse(NewErrorResponse(req.ID, &Error{
+				Code:    CodeInvalidRequest,
+				Message: "Invalid request: unsupported JSON-RPC version",
+			}))
+			continue
+		}
+
+		// TODO: ID MUST be a string or integer
 
 		resp := s.Handle(&req)
 		respBytes, err := json.Marshal(resp)

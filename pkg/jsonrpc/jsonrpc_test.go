@@ -43,27 +43,27 @@ func TestNewRequest(t *testing.T) {
 	})
 
 	t.Run("with params", func(t *testing.T) {
-		params := map[string]any{"key": "value"}
+		params := json.RawMessage(`{"key":"value"}`)
 		req, err := NewRequest("echo", params, 1)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
-		if req.Params["key"] != "value" {
-			t.Errorf("Params[key] = %v, want %q", req.Params["key"], "value")
+		if string(req.Params) != `{"key":"value"}` {
+			t.Errorf("Params = %s, want %s", req.Params, `{"key":"value"}`)
 		}
 	})
 }
 
 func TestNewResponse(t *testing.T) {
 	id := json.RawMessage(`1`)
-	result := map[string]any{"ok": true}
+	result := json.RawMessage(`{"ok":true}`)
 	resp := NewResponse(id, result)
 
 	if resp.JSONRPC != Version {
 		t.Errorf("JSONRPC = %q, want %q", resp.JSONRPC, Version)
 	}
-	if resp.Result["ok"] != true {
-		t.Errorf("Result[ok] = %v, want true", resp.Result["ok"])
+	if string(resp.Result) != `{"ok":true}` {
+		t.Errorf("Result = %s, want %s", resp.Result, `{"ok":true}`)
 	}
 	if resp.Error != nil {
 		t.Errorf("Error = %v, want nil", resp.Error)
@@ -104,8 +104,8 @@ func TestEmptyResult(t *testing.T) {
 	if r == nil {
 		t.Fatal("EmptyResult() returned nil")
 	}
-	if len(r) != 0 {
-		t.Errorf("len(EmptyResult()) = %d, want 0", len(r))
+	if string(r) != "{}" {
+		t.Errorf("EmptyResult() = %s, want {}", r)
 	}
 }
 
@@ -122,7 +122,7 @@ func TestJSONRawMessage(t *testing.T) {
 }
 
 func TestRequestJSON(t *testing.T) {
-	req, _ := NewRequest("ping", map[string]any{"a": 1}, 1)
+	req, _ := NewRequest("ping", json.RawMessage(`{"a":1}`), 1)
 	data, err := json.Marshal(req)
 	if err != nil {
 		t.Fatalf("Marshal: %v", err)
@@ -141,7 +141,7 @@ func TestRequestJSON(t *testing.T) {
 }
 
 func TestResponseJSON(t *testing.T) {
-	resp := NewResponse(json.RawMessage(`"abc"`), map[string]any{"ok": true})
+	resp := NewResponse(json.RawMessage(`"abc"`), json.RawMessage(`{"ok":true}`))
 	data, err := json.Marshal(resp)
 	if err != nil {
 		t.Fatalf("Marshal: %v", err)
@@ -162,7 +162,7 @@ func TestResponseJSON(t *testing.T) {
 func TestServerRegisterMethod(t *testing.T) {
 	s := NewServer()
 	called := false
-	s.RegisterMethod("test", func(params map[string]any) (map[string]any, *Error) {
+	s.RegisterMethod("test", func(params json.RawMessage) (json.RawMessage, *Error) {
 		called = true
 		return EmptyResult(), nil
 	})
